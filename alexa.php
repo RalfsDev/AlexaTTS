@@ -181,23 +181,63 @@
     <?php
         error_reporting(E_ALL);
         ini_set('display_errors', 1);
-         
-        //Variablen setzen
-        $cookies="cookies.txt";
-        
-        echo "Your Browser is ".$_SERVER['HTTP_USER_AGENT']."<br>Your User Lang is: ".$_SERVER['HTTP_ACCEPT_LANGUAGE']."<br> When you have any trouble with this script open Alexa.php and replace this two data in the alexa.php -> user_lang and browser <br><br>";
-        
-        //check if the curl library exists
+		
+		//check if the curl library exists
         if (!function_exists('curl_init')){
             echo "Curl is not enabled or installed on your web server at Synlogy: Webstation -> Php Settings -> Edit Php Profile -> choose the checkbox at extensions & curl";
         }
-
-        //load and check cookies
+        
+        //Variablen setzen
+        $cookies="cookies.txt";
+		
+		
+		//load and check cookies
         ALEXA_precheckCookies($cookies);
-
-        //read devices and print them in a table
+		
+		//read devices and print them in a table
         $devices = ALEXA_getDevices($cookies);
+		
+		
+		////////////////////////////////////////
+		//				API
+		////////////////////////////////////////
+		
+		if(isset($_GET["API"]) && $_GET["API"] == "true"){
+			if($_GET["mode"] == "getDevices"){
+				echo json_encode($devices);
+			}
+			else if($_GET["mode"] == "sendTTS"){
+				//get values for the tts send
+				if (isset($_GET['device_name'])){
+					$device_name = $_GET['device_name'];
+				}else{
+					die('No Device Name (device_name) selected!');
+				}
 
+				if (isset($_GET['text_tts'])){
+					$text_tts = $_GET['text_tts'];
+					if (strlen($text_tts) >= 1000)
+						die('You really should not use more than 1000 characters in your text ');
+				}else{
+					die('No Text (text_tts) selected!');
+				}
+
+				//TTS an amazon Senden
+				ALEXA_TTS($cookies, $devices, $device_name, $text_tts);
+			}
+			if(isset($_GET["GUIAPI"]) && $_GET["GUIAPI"] == "true")
+				echo '<script>window.close();</script>';
+			exit();
+		}
+		
+		////////////////////////////////////////
+		//				GUI
+		////////////////////////////////////////
+		
+        //Print the Browser Debug
+        echo "Your Browser is ".$_SERVER['HTTP_USER_AGENT']."<br>Your User Lang is: ".$_SERVER['HTTP_ACCEPT_LANGUAGE']."<br> When you have any trouble with this script open Alexa.php and replace this two data in the alexa.php -> user_lang and browser <br><br>";
+
+		//Print the device list
         echo "<h1>The following devices are available in your Amazon account</h1>";
         echo '<table border="1"><tr><th>Name</th><th>serialNumber</th><th>deviceFamily</th><th>deviceType</th><th>deviceOwnerCustomerId</th><th>HTTP REQUEST URL</th></tr>';
         foreach($devices as $device){
@@ -207,7 +247,7 @@
             echo "<td>".$device["DeviceFamily"]."</td>";
             echo "<td>".$device["DeviceType"]."</td>";
             echo "<td>".$device["DeviceOwnerId"]."</td>";
-            echo "<td>http://".$_SERVER['HTTP_HOST']."/".$_SERVER['SCRIPT_NAME']."?device_name=".$device["AccountName"]."&text_tts=here you can add your text</td>";
+            echo "<td>http://".$_SERVER['HTTP_HOST']."/".$_SERVER['SCRIPT_NAME']."?API=true&mode=sendTTS&device_name=".$device["AccountName"]."&text_tts=here you can add your text</td>";
             echo "</tr>";
         }
         echo "</table>";
@@ -225,31 +265,9 @@
 		</select><br>
 		<textarea name="text_tts" id="text_tts"></textarea><br>
 		<input type="hidden" name="GUIAPI" id="GUIAPI" value="true"></input>
+		<input type="hidden" name="API" id="API" value="true"></input>
+		<input type="hidden" name="mode" id="mode" value="sendTTS"></input>
 		<input type="submit">
 		</form>
-        
-        <?php
-        //get values for the tts send
-        if (isset($_GET['device_name'])){
-            $device_name = $_GET['device_name'];
-        }else{
-            die('No Device Name (device_name) selected!');
-        }
-
-        if (isset($_GET['text_tts'])){
-            $text_tts = $_GET['text_tts'];
-            if (strlen($text_tts) >= 1000)
-                die('You really should not use more than 1000 characters in your text ');
-        }else{
-            die('No Text (text_tts) selected!');
-        }
-
-        //TTS an amazon Senden
-        ALEXA_TTS($cookies, $devices, $device_name, $text_tts);
-		
-		
-		if($_GET["GUIAPI"] == "true")
-			echo '<script>window.close();</script>';
-    ?>
     </body>
 </html>
