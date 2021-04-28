@@ -8,7 +8,7 @@ Using Amazon Alexa Text to Speech (TTS) via Smart Home. Implementation via PHP a
 - Download alexa.php and put it on your server.
 - upload your cookies.txt file
 
-For a more detailed installation tutorial visit https://intelligentes-haus.de/tutorials/smart-home-tutorials/amazon-alexa-text-to-speech-tts-ubers-smart-home-nutzen/
+For a more detailed installation tutorial visit https://iqhaus.de/tutorials/smart-home-tutorials/amazon-alexa-text-to-speech-tts-ubers-smart-home-nutzen/
 
 
 ## usage with GUI
