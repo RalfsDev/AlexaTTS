@@ -2,32 +2,14 @@
 /*        TODO
 
     * manage Errors in Functions
+    * API json return, if ok or error occured and which error
 
 */
 
     //Clears a String for the Alexa output
     function clear_string($str, $how = '_'){
-        $search = array("ä", "ö", "ü", "ß", "Ä", "Ö",
-                  "Ü", "&", "é", "á", "ó",
-                  " :)", " :D", " :-)", " :P",
-                  " :O", " ;D", " ;)", " ^^",
-                  " :|", " :-/", ":)", ":D",
-                  ":-)", ":P", ":O", ";D", ";)",
-                  "^^", ":|", ":-/", "(", ")", "[", "]",
-                  "<", ">", "!", "\"", "§", "$", "%", "&",
-                  "/", "(", ")", "=", "?", "`", "´", "*", "'",
-                  "_", ":", ";", "²", "³", "{", "}",
-                  "\\", "~", "#", "+", ".", ",",
-                  "=", ":", "=)");
-
-        $replace = array("ae", "oe", "ue", "ss", "Ae", "Oe",
-                   "Ue", "und", "e", "a", "o", "", "",
-                   "", "", "", "", "", "", "", "", "",
-                   "", "", "", "", "", "", "", "", "",
-                   "", "", "", "", "", "", "", "", "",
-                   "", "", "", "", "", "", "", "", "",
-                   "", "", "", "", "", "", "", "", "",
-                   "", "", "", "", "", "", "", "", "", "");
+        $search =  array("ä",  "ö",  "ü",  "ß",  "Ä",  "Ö",  "Ü",  "&",   "é", "á", "ó", " :)", " :D", " :-)", " :P", " :O", " ;D", " ;)", " ^^", " :|", " :-/", ":)", ":D", ":-)", ":P", ":O", ";D", ";)", "^^", ":|", ":-/", "(", ")", "[", "]", "<", ">", "!", "\"", "§", "$", "%", "&", "/", "(", ")", "=", "?", "`", "´", "*", "'", "_", ":", ";", "²", "³", "{", "}", "\\", "~", "#", "+", ".", ",", "=", ":", "=)");
+        $replace = array("ae", "oe", "ue", "ss", "Ae", "Oe", "Ue", "und", "e", "a", "o", "",    "",    "",     "",    "",    "",    "",    "",    "",    "",     "",   "",   "",    "",   "",   "",   "",   "",   "",   "",    "",  "",  "",  "",  "",  "",  "",  "",   "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",   "",  "",  "",  "",  "",  "",  "",  "");
 
         $str = str_replace($search, $replace, $str);
         $str = strtolower(preg_replace("/[^a-zA-Z0-9]+/", trim($how), $str));
@@ -51,8 +33,8 @@
     }
     //Function for Alexa get Devices
     function ALEXA_getDevices($cookies){
-		$basic_url = 'https://alexa.amazon.de';
-		
+        $basic_url = 'https://alexa.amazon.de';
+        
         $devices = array();
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL,''.$basic_url.'/api/devices-v2/device?cached=false');
@@ -98,7 +80,7 @@
     //Function for Alexa tts
     function ALEXA_TTS($cookies, $devices, $device_name, $text_tts){
         //variables
-		$basic_url = 'https://alexa.amazon.de';
+        $basic_url = 'https://alexa.amazon.de';
         $browser = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0";
         $user_lang = 'de,en-US;q=0.7,en;q=0.3';
         
@@ -181,63 +163,80 @@
     <?php
         error_reporting(E_ALL);
         ini_set('display_errors', 1);
-		
-		//check if the curl library exists
+        
+        //check if the curl library exists
         if (!function_exists('curl_init')){
             echo "Curl is not enabled or installed on your web server at Synlogy: Webstation -> Php Settings -> Edit Php Profile -> choose the checkbox at extensions & curl";
         }
         
         //Variablen setzen
-        $cookies="cookies.txt";
-		
-		
-		//load and check cookies
+        $cookies = realpath("cookies.txt");        //use realpath to avoid errors with different systems
+        
+        
+        //load and check cookies
         ALEXA_precheckCookies($cookies);
-		
-		//read devices and print them in a table
+        
+        //read devices and print them in a table
         $devices = ALEXA_getDevices($cookies);
-		
-		
-		////////////////////////////////////////
-		//				API
-		////////////////////////////////////////
-		
-		if(isset($_GET["API"]) && $_GET["API"] == "true"){
-			if($_GET["mode"] == "getDevices"){
-				echo json_encode($devices);
-			}
-			else if($_GET["mode"] == "sendTTS"){
-				//get values for the tts send
-				if (isset($_GET['device_name'])){
-					$device_name = $_GET['device_name'];
-				}else{
-					die('No Device Name (device_name) selected!');
-				}
+        
+        
+        ////////////////////////////////////////
+        //                API
+        ////////////////////////////////////////
+        
+        if(isset($_GET["API"]) && $_GET["API"] == "true"){
+            if($_GET["mode"] == "getDevices"){
+                echo json_encode($devices);
+            }
+            else if($_GET["mode"] == "sendTTS"){
+                //get values for the tts send
+                if (isset($_GET['device_name']) || isset($_POST['device_name'])){
+                    $device_name = isset($_POST['device_name'])?$_POST['device_name']:$_GET['device_name'];
+                }else{
+                    die('No Device Name (device_name) selected!');
+                }
 
-				if (isset($_GET['text_tts'])){
-					$text_tts = $_GET['text_tts'];
-					if (strlen($text_tts) >= 1000)
-						die('You really should not use more than 1000 characters in your text ');
-				}else{
-					die('No Text (text_tts) selected!');
-				}
+                if (isset($_GET['text_tts']) || isset($_POST['text_tts'])){
+                    $text_tts = isset($_POST['text_tts'])?$_POST['text_tts']:$_GET['text_tts'];
+                    $text_tts = str_replace(array("\r\n", "\r", "\n"), "<br />", $text_tts);
+                    $text_tts = str_replace(array("<br>", "</br>", "<br />", "\""), array(" ", " ", " ", ","), $text_tts);
+                }else{
+                    die('No Text (text_tts) selected!');
+                }
 
-				//TTS an amazon Senden
-				ALEXA_TTS($cookies, $devices, $device_name, $text_tts);
-			}
-			if(isset($_GET["GUIAPI"]) && $_GET["GUIAPI"] == "true")
-				echo '<script>window.close();</script>';
-			exit();
-		}
-		
-		////////////////////////////////////////
-		//				GUI
-		////////////////////////////////////////
-		
+                //TTS an amazon Senden
+                if (strlen($text_tts) >= 500){
+                    //split texts
+                    $parts = explode(".", $text_tts);
+                    $text_tts_small = "";
+                    for($i=0; $i < count($parts); $i += 1){
+                        if(strlen($text_tts_small) + strlen($parts[$i]) < 500){
+                            $text_tts_small .= $parts[$i].".";    //add the Dot, because that one is removed by explode
+                        }else{
+                            echo $text_tts_small."<br>";
+                            ALEXA_TTS($cookies, $devices, $device_name, $text_tts_small);
+                            sleep(5);    //alexa.amazon.de need a break of 5 seconds between 2 TTS calls
+                            $text_tts_small = $parts[$i].".";
+                        }
+                    }
+                    ALEXA_TTS($cookies, $devices, $device_name, $text_tts_small);    //last part
+                }else{
+                    ALEXA_TTS($cookies, $devices, $device_name, $text_tts);
+                }
+            }
+            if(isset($_GET["GUIAPI"]) && $_GET["GUIAPI"] == "true")
+                echo '<script>window.close();</script>';
+            exit();
+        }
+        
+        ////////////////////////////////////////
+        //                GUI
+        ////////////////////////////////////////
+        
         //Print the Browser Debug
         echo "Your Browser is ".$_SERVER['HTTP_USER_AGENT']."<br>Your User Lang is: ".$_SERVER['HTTP_ACCEPT_LANGUAGE']."<br> When you have any trouble with this script open Alexa.php and replace this two data in the alexa.php -> user_lang and browser <br><br>";
 
-		//Print the device list
+        //Print the device list
         echo "<h1>The following devices are available in your Amazon account</h1>";
         echo '<table border="1"><tr><th>Name</th><th>serialNumber</th><th>deviceFamily</th><th>deviceType</th><th>deviceOwnerCustomerId</th><th>HTTP REQUEST URL</th></tr>';
         foreach($devices as $device){
@@ -252,22 +251,19 @@
         }
         echo "</table>";
         echo "<BR><BR>";
-		
-		//form for direct GUI use
-		?>
-		<h3>TTS text</h3>
-		<form action="alexa.php?" method="get" target="_blank">
-		<select name="device_name" id="device_name">
-			<?php
-				foreach($devices as $dev)
-					echo '<option value="'.$dev["AccountName"].'">'.$dev["AccountName"].'</option>';
-			?>
-		</select><br>
-		<textarea name="text_tts" id="text_tts"></textarea><br>
-		<input type="hidden" name="GUIAPI" id="GUIAPI" value="true"></input>
-		<input type="hidden" name="API" id="API" value="true"></input>
-		<input type="hidden" name="mode" id="mode" value="sendTTS"></input>
-		<input type="submit">
-		</form>
+        
+        //form for direct GUI use
+        ?>
+        <h3>TTS text</h3>
+        <form action="alexa.php?API=true&mode=sendTTS&GUIAPI=true" method="POST" target="_blank">
+        <select name="device_name" id="device_name">
+            <?php
+                foreach($devices as $dev)
+                    echo '<option value="'.$dev["AccountName"].'">'.$dev["AccountName"].'</option>';
+            ?>
+        </select><br>
+        <textarea name="text_tts" id="text_tts"></textarea><br>
+        <input type="submit">
+        </form>
     </body>
 </html>
