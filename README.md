@@ -12,7 +12,7 @@ For a more detailed installation tutorial visit https://iqhaus.de/tutorials/smar
 
 
 ## usage with GUI
-In the GUI you can see 
+In the GUI you can see all alexa devices in a table and under the table a small form, which you can do TTS calls.
 
 ## usage as API
 alexa.php?API=true&mode=XXX
@@ -24,3 +24,7 @@ alexa.php?API=true&mode=XXX
   Additional parameters: device_name, text_tts
   eg. alexa.php?API=true&mode=sendTTS&device_name=myAlexa&text_tts=Hello World
   
+
+## TODO
+- manage errors in function
+- API json return, if ok or error occured and which error
